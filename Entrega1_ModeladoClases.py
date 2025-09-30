@@ -1,11 +1,14 @@
 
-from datetime import datetime
+from carpeta import Carpeta
+from mensaje import Mensaje
 
 class Usuario:
-    def __init__(self, nombre, email):
+
+
+    def __init__(self, nombre: str, email: str):
         self.__nombre = nombre
         self.__email = email
-        self.__carpetas = [] 
+        self.__carpetas = []
 
     @property
     def nombre(self):
@@ -19,14 +22,33 @@ class Usuario:
     def carpetas(self):
         return self.__carpetas
 
-    def crear_carpeta(self, nombre):
+    def crear_carpeta(self, nombre: str) -> Carpeta:
         carpeta = Carpeta(nombre)
         self.__carpetas.append(carpeta)
         return carpeta
 
+    def listar_carpetas(self):
+        return [c.nombre for c in self.__carpetas]
+
+    def enviar_mensaje(self, destinatario: str, asunto: str, cuerpo: str, servidor):
+   
+        msg = Mensaje(self.email, destinatario, asunto, cuerpo)
+        return servidor.enviar_mensaje(msg)
+
+    def leer_mensajes(self, carpeta_nombre: str):
+   
+        carpeta = next((c for c in self.__carpetas if c.nombre == carpeta_nombre), None)
+        if carpeta:
+            return carpeta.listar_mensajes()
+        return []
+mensaje.py
+python
+Copiar código
+from datetime import datetime
 
 class Mensaje:
-    def __init__(self, remitente, destinatario, asunto, cuerpo):
+
+    def __init__(self, remitente: str, destinatario: str, asunto: str, cuerpo: str):
         self.__remitente = remitente
         self.__destinatario = destinatario
         self.__asunto = asunto
@@ -52,10 +74,14 @@ class Mensaje:
     @property
     def fecha(self):
         return self.__fecha
-
+carpeta.py
+python
+Copiar código
+from mensaje import Mensaje
 
 class Carpeta:
-    def __init__(self, nombre):
+
+    def __init__(self, nombre: str):
         self.__nombre = nombre
         self.__mensajes = []
 
@@ -67,22 +93,28 @@ class Carpeta:
     def mensajes(self):
         return self.__mensajes
 
-    def agregar_mensaje(self, mensaje):
+    def agregar_mensaje(self, mensaje: Mensaje):
         self.__mensajes.append(mensaje)
 
     def listar_mensajes(self):
         return [m.asunto for m in self.__mensajes]
-
+servidor.py
+python
+Copiar código
+from carpeta import Carpeta
+from mensaje import Mensaje
+from usuario import Usuario
 
 class ServidorCorreo:
+  
     def __init__(self):
         self.__usuarios = []
 
-    def registrar_usuario(self, usuario):
+    def registrar_usuario(self, usuario: Usuario):
         self.__usuarios.append(usuario)
 
-    def enviar_mensaje(self, mensaje):
-
+    def enviar_mensaje(self, mensaje: Mensaje) -> bool:
+    
         for usuario in self.__usuarios:
             if usuario.email == mensaje.destinatario:
                 inbox = next((c for c in usuario.carpetas if c.nombre == "Inbox"), None)
@@ -94,9 +126,11 @@ class ServidorCorreo:
 
     def listar_usuarios(self):
         return [u.email for u in self.__usuarios]
-
-
-
+main.py
+python
+Copiar código
+from servidor import ServidorCorreo
+from usuario import Usuario
 
 if __name__ == "__main__":
     servidor = ServidorCorreo()
@@ -107,7 +141,5 @@ if __name__ == "__main__":
     servidor.registrar_usuario(u1)
     servidor.registrar_usuario(u2)
 
-    msg = Mensaje("elias@mail.com", "ana@mail.com", "Hola", "¿Cómo estás?")
-    servidor.enviar_mensaje(msg)
-
-    print(u2.carpetas[0].listar_mensajes())  
+    u1.enviar_mensaje("ana@mail.com", "Hola", "¿Cómo estás?", servidor)
+    print("Mensajes en la bandeja de entrada de Ana:", u2.leer_mensajes("Inbox"))
